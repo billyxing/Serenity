@@ -22,6 +22,7 @@ namespace Serenity
         protected string widgetName;
         protected string uniqueName;
         protected jQueryObject element;
+        protected object options;
 
         /// <summary>
         /// Creates a widget on given element. Widget gets a unique name like MyNamespace_MyWidget1234.
@@ -32,9 +33,10 @@ namespace Serenity
         /// * All events attached by this widget class will be unbound when element is removed from document.
         /// * Elements gets a css class like "s-MyWidget" (it has no namespace by default, but this can be customized)
         /// </remarks>
-        protected Widget(jQueryObject element)
+        protected Widget(jQueryObject element, object options = null)
         {
             this.element = element;
+            this.options = options ?? new object();
             this.widgetName = WidgetExtensions.GetWidgetName(this.GetType());
             this.uniqueName = widgetName + (NextWidgetNumber++).ToString();
 
@@ -141,6 +143,7 @@ namespace Serenity
         /// </summary>
         public jQueryObject Element 
         { 
+            [InlineCode("{this}.element")]
             get { return element; } 
         }
 
@@ -149,6 +152,7 @@ namespace Serenity
         /// </summary>
         public string UniqueName
         {
+            [InlineCode("{this}.uniqueName")]
             get { return uniqueName; }
         }
 
@@ -159,6 +163,7 @@ namespace Serenity
         /// </summary>
         public string WidgetName
         {
+            [InlineCode("{this}.widgetName")]
             get { return widgetName; }
         }
 
@@ -170,7 +175,7 @@ namespace Serenity
         public static jQueryObject ElementFor(Type editorType)
         {
             var elementAttr = editorType.GetCustomAttributes(typeof(ElementAttribute), true);
-            string elementHtml = (elementAttr.Length > 0) ? elementAttr[0].As<ElementAttribute>().Html : "<input/>";
+            string elementHtml = (elementAttr.Length > 0) ? elementAttr[0].As<ElementAttribute>().Value : "<input/>";
             return jQuery.FromHtml(elementHtml);
         }
 

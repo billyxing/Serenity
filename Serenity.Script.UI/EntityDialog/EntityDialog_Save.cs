@@ -46,14 +46,14 @@ namespace Serenity
 
         protected virtual TEntity GetSaveEntity()
         {
-            var entity = new TEntity();
+            var entity = new object().As<TEntity>();
 
             if (this.propertyGrid != null)
                 this.propertyGrid.Save(entity);
 
             if (this.IsEditMode)
             {
-                string idField = GetEntityIdField();
+                string idField = GetIdProperty();
                 if (idField != null && !Script.IsValue(entity.As<JsDictionary>()[idField]))
                     entity.As<JsDictionary>()[idField] = this.EntityId;
             }
@@ -70,7 +70,7 @@ namespace Serenity
 
             if (this.IsEditMode)
             {
-                string idField = GetEntityIdField();
+                string idField = GetIdProperty();
                 if (idField != null)
                     req.EntityId = this.EntityId;
             }

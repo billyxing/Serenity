@@ -1,10 +1,12 @@
 ﻿using jQueryApi;
+using System;
+using System.Runtime.CompilerServices;
 
 namespace Serenity
 {
     public class PrefixedContext : ScriptContext
     {
-        private string idPrefix;
+        protected readonly string idPrefix;
 
         public PrefixedContext(string idPrefix)
         {
@@ -22,6 +24,12 @@ namespace Serenity
             return ById(id).GetWidget<TWidget>();
         }
 
-        public string IdPrefix { get { return idPrefix; } }
+        [ScriptName("w")]
+        private object w(string id, Type t)
+        {
+            return J("#" + idPrefix + id).GetWidget(t);
+        }
+
+        public string IdPrefix { [InlineCode("{this}.idPrefix")] get { return idPrefix; } }
     }
 }

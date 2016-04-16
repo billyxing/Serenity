@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 
 namespace Serenity
 {
-    [Imported, Serializable]
+    [Imported, Serializable, ScriptNamespace("Slick"), ScriptName("RemoteViewOptions")]
     public class SlickRemoteViewOptions
     {
         public bool AutoLoad { get; set; }
@@ -37,36 +37,53 @@ namespace Serenity
     {
         public TypeOption<string, Func<TItem, object>> Getter { get; set; }
         public Func<SlickGroup<TItem>, string> Formatter { get; set; }
+        public Func<SlickGroup<TItem>, SlickGroup<TItem>, int> Comparer { get; set; }
         public List<SlickAggregator> Aggregators { get; set; }
         public bool AggregateCollapsed { get; set; }
         public bool LazyTotalsCalculation { get; set; }
     }
 
-    [Imported, ScriptNamespace("Slick"), ScriptName("Group"), IncludeGenericArguments(false), Serializable]
+    [Imported, ScriptNamespace("Slick"), ScriptName("Group"), IncludeGenericArguments(false)]
     public class SlickGroup<TItem>
     {
         public bool IsGroup { [InlineCode("!!{this}.__group")] get { return false; } }
+        [IntrinsicProperty]
         public int Level { get { return 0; } }
+        [IntrinsicProperty]
         public int Count { get { return 0; } }
+        [IntrinsicProperty]
         public object Value { get { return null; } }
+        [IntrinsicProperty]
         public string Title { get { return null; } }
+        [IntrinsicProperty]
         public bool Collapsed { get { return false; } }
+        [IntrinsicProperty]
         public object Totals { get { return null; } }
+        [IntrinsicProperty]
         public TItem[] Rows { get { return null; } }
+        [IntrinsicProperty]
         public SlickGroup<TItem> Groups { get { return null; } }
+        [IntrinsicProperty]
         public string GroupingKey { get { return null; } }
     }
 
-    [Imported, ScriptNamespace("Slick"), ScriptName("GroupTotals"), Serializable]
+    [Imported, ScriptNamespace("Slick"), ScriptName("GroupTotals")]
     public class SlickGroupTotals<TItem>
     {
         [ScriptName("__groupTotals")]
+        [IntrinsicProperty]
         public bool IsGroupTotals { get { return false; } }
+        [IntrinsicProperty]
         public SlickGroup<TItem> Group { get { return null; } }
+        [IntrinsicProperty]
         public bool Initialized { get { return false; } }
+        [IntrinsicProperty]
         public JsDictionary<string, object> Sum { get { return null; } }
+        [IntrinsicProperty]
         public JsDictionary<string, object> Avg { get { return null; } }
+        [IntrinsicProperty]
         public JsDictionary<string, object> Min { get { return null; } }
+        [IntrinsicProperty]
         public JsDictionary<string, object> Max { get { return null; } }
     }
 
@@ -75,7 +92,7 @@ namespace Serenity
     public delegate ListResponse<TEntity> SlickRemoteViewProcessCallback<TEntity>(ListResponse<TEntity> data, SlickRemoteView<TEntity> view);
     public delegate bool SlickRemoteViewFilter<TEntity>(TEntity item, SlickRemoteView<TEntity> view);
 
-    [Imported, ScriptNamespace("Slick.Data"), ScriptName("RemoteView")]
+    [Imported, ScriptNamespace("Slick"), ScriptName("RemoteView")]
     public class SlickRemoteView
     {
         public SlickRemoteView(SlickRemoteViewOptions options)
@@ -155,6 +172,24 @@ namespace Serenity
             return null;
         }
 
+        public void CollapseAllGroups(int level = 0)
+        {
+        }
+
+        public void ExpandAllGroups(int level = 0)
+        {
+        }
+
+        [ExpandParams]
+        public void CollapseGroup(params object[] keys)
+        {
+        }
+
+        [ExpandParams]
+        public void ExpandGroup(params object[] keys)
+        {
+        }
+
         [IntrinsicProperty]
         public dynamic Params { get { return null; } }
 
@@ -185,7 +220,7 @@ namespace Serenity
         public Int32? SeekToPage;
     }
 
-    [Imported, ScriptNamespace("Slick.Data"), ScriptName("RemoteView"), IncludeGenericArguments(false)]
+    [Imported, ScriptNamespace("Slick"), ScriptName("RemoteView"), IncludeGenericArguments(false)]
     public class SlickRemoteView<TEntity> : SlickRemoteView
     {
         public SlickRemoteView(SlickRemoteViewOptions options)
@@ -258,12 +293,12 @@ namespace Serenity
         public new SlickRemoteViewProcessCallback<TEntity> OnProcessData;
     }
 
-    [Imported, ScriptNamespace("Slick.Data.Aggregators"), ScriptName("Aggregator")]
+    [Imported, ScriptNamespace("Slick.Aggregators"), ScriptName("Aggregator")]
     public abstract class SlickAggregator
     {
     }
 
-    [Imported, ScriptNamespace("Slick.Data.Aggregators"), ScriptName("Avg")]
+    [Imported, ScriptNamespace("Slick.Aggregators"), ScriptName("Avg")]
     public class SlickAvg : SlickAggregator
     {
         public SlickAvg(string field)
@@ -271,7 +306,7 @@ namespace Serenity
         }
     }
 
-    [Imported, ScriptNamespace("Slick.Data.Aggregators"), ScriptName("Sum")]
+    [Imported, ScriptNamespace("Slick.Aggregators"), ScriptName("Sum")]
     public class SlickSum : SlickAggregator
     {
         public SlickSum(string field)
@@ -279,7 +314,7 @@ namespace Serenity
         }
     }
 
-    [Imported, ScriptNamespace("Slick.Data.Aggregators"), ScriptName("Min")]
+    [Imported, ScriptNamespace("Slick.Aggregators"), ScriptName("Min")]
     public class SlickMin : SlickAggregator
     {
         public SlickMin(string field)
@@ -287,7 +322,7 @@ namespace Serenity
         }
     }
 
-    [Imported, ScriptNamespace("Slick.Data.Aggregators"), ScriptName("Max")]
+    [Imported, ScriptNamespace("Slick.Aggregators"), ScriptName("Max")]
     public class SlickMax : SlickAggregator
     {
         public SlickMax(string field)

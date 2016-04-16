@@ -1,20 +1,21 @@
 ﻿using jQueryApi;
-using Serenity.ComponentModel;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace Serenity
 {
+    [IncludeGenericArguments(false), ScriptName("EntityGrid")]
     public abstract class EntityGrid<TEntity, TOptions> : DataGrid<TEntity, TOptions>
         where TEntity: class, new()
         where TOptions: class, new()
     {
         private string entityType;
-        private string entityPlural;
-        private string entitySingular;
+        private string displayName;
+        private string itemName;
         private string service;
-        private Type entityDialogType;
+        private Type dialogType;
 
         public EntityGrid(jQueryObject container, TOptions opt = null)
             : base(container, opt)
@@ -34,23 +35,17 @@ namespace Serenity
 
         protected override string GetInitialTitle()
         {
-            return GetEntityPlural();
+            return GetDisplayName();
         }
 
         protected override string GetLocalTextPrefix()
         {
-            if (localTextPrefix == null)
-            {
-                var attributes = this.GetType().GetCustomAttributes(typeof(LocalTextPrefixAttribute), true);
-                if (attributes.Length >= 1)
-                    localTextPrefix = attributes[0].As<LocalTextPrefixAttribute>().Value;
-                else
-                    localTextPrefix = GetEntityType();
+            var result = base.GetLocalTextPrefix();
 
-                localTextPrefix = ("Db." + localTextPrefix + ".");
-            }
+            if (result.IsEmptyOrNull())
+                return GetEntityType();
 
-            return localTextPrefix;
+            return result;
         }
 
         protected virtual string GetEntityType()
@@ -83,43 +78,43 @@ namespace Serenity
             return entityType;
         }
 
-        protected virtual string GetEntityPlural()
+        protected virtual string GetDisplayName()
         {
-            if (entityPlural == null)
+            if (displayName == null)
             {
                 var attributes = this.GetType().GetCustomAttributes(typeof(DisplayNameAttribute), true);
                 if (attributes.Length >= 1)
                 {
-                    entityPlural = attributes[0].As<DisplayNameAttribute>().DisplayName;
-                    entityPlural = LocalText.GetDefault(entityPlural, entityPlural);
+                    displayName = attributes[0].As<DisplayNameAttribute>().DisplayName;
+                    displayName = LocalText.GetDefault(displayName, displayName);
                 }
                 else
-                    entityPlural = (Q.TryGetText(GetLocalTextPrefix() + "EntityPlural") ?? GetEntityType());
+                    displayName = (Q.TryGetText(GetLocalTextDbPrefix() + "EntityPlural") ?? GetEntityType());
             }
 
-            return entityPlural;
+            return displayName;
         }
 
-        protected virtual string GetEntitySingular()
+        protected virtual string GetItemName()
         {
-            if (entitySingular == null)
+            if (itemName == null)
             {
                 var attributes = this.GetType().GetCustomAttributes(typeof(ItemNameAttribute), true);
                 if (attributes.Length >= 1)
                 {
-                    entitySingular = attributes[0].As<ItemNameAttribute>().Value;
-                    entitySingular = LocalText.GetDefault(entitySingular, entitySingular);
+                    itemName = attributes[0].As<ItemNameAttribute>().Value;
+                    itemName = LocalText.GetDefault(itemName, itemName);
                 }
                 else
-                    entitySingular = (Q.TryGetText(GetLocalTextPrefix() + "EntitySingular") ?? GetEntityType());
+                    itemName = (Q.TryGetText(GetLocalTextDbPrefix() + "EntitySingular") ?? GetEntityType());
             }
 
-            return entitySingular;
+            return itemName;
         }
 
         protected override string GetAddButtonCaption()
         {
-            return String.Format(Texts.Controls.EntityGrid.NewButton, GetEntitySingular());
+            return String.Format(Q.Text("Controls.EntityGrid.NewButton"), GetItemName());
         }
 
         protected override List<ToolButton> GetButtons()
@@ -148,8 +143,8 @@ namespace Serenity
 
             return new ToolButton
             {
-                Title = noText ? null : Texts.Controls.EntityGrid.RefreshButton.Get(),
-                Hint = noText ? Texts.Controls.EntityGrid.RefreshButton.Get() : null,
+                Title = noText ? null : Q.Text("Controls.EntityGrid.RefreshButton"),
+                Hint = noText ? Q.Text("Controls.EntityGrid.RefreshButton") : null,
                 CssClass = "refresh-button",
                 OnClick = delegate
                 {
@@ -160,7 +155,7 @@ namespace Serenity
 
         protected virtual void AddButtonClick()
         {
-            EditItem(new TEntity());
+            EditItem(new object().As<TEntity>());
         }
 
         protected override void EditItem(object entityOrId)
@@ -179,7 +174,7 @@ namespace Serenity
             });
         }
 
-        protected override void EditItem(string itemType, object entityOrId)
+        protected override void EditItemOfType(string itemType, object entityOrId)
         {
             if (itemType == GetItemType())
             {
@@ -227,7 +222,13 @@ namespace Serenity
             return GetEntityType();
         }
 
-        protected virtual void InitEntityDialog(Widget dialog)
+        [Obsolete("Use InitDialog"), InlineCode("InitDialog({dialog})")]
+        protected void InitEntityDialog(Widget dialog)
+        {
+            InitDialog(dialog);
+        }
+
+        protected virtual void InitDialog(Widget dialog)
         {
             var self = this;
             dialog.BindToDataChange(this, (e, dci) => self.SubDialogDataChange());
@@ -237,7 +238,7 @@ namespace Serenity
         {
             if (itemType == GetItemType())
             {
-                InitEntityDialog(dialog);
+                InitDialog(dialog);
                 return;
             }
 
@@ -247,11 +248,11 @@ namespace Serenity
 
         protected virtual Widget CreateEntityDialog(string itemType, Action<Widget> callback)
         {
-            var dialogClass = GetEntityDialogType(itemType);
+            var dialogClass = GetDialogTypeFor(itemType);
 
             var dialog = Serenity.Widget.CreateOfType(
                 widgetType: dialogClass,
-                options: (object)GetEntityDialogOptions(itemType),
+                options: (object)GetDialogOptionsFor(itemType),
                 init: (d) =>
                 {
                     InitEntityDialog(itemType, d);
@@ -262,44 +263,45 @@ namespace Serenity
             return dialog;
         }
 
-        protected virtual dynamic GetEntityDialogOptions()
+        protected virtual dynamic GetDialogOptions()
         {
             return new { };
         }
 
-        protected virtual dynamic GetEntityDialogOptions(string itemType)
+        protected virtual dynamic GetDialogOptionsFor(string itemType)
         {
             if (itemType == GetItemType())
-                return GetEntityDialogOptions();
+                return GetDialogOptions();
 
             return new { };
         }
 
-        protected virtual Type GetEntityDialogType(string itemType)
+        protected virtual Type GetDialogTypeFor(string itemType)
         {
             if (itemType == GetItemType())
-                return GetEntityDialogType();
+                return GetDialogType();
 
             return DialogTypeRegistry.Get(itemType);
         }
 
-        protected virtual Type GetEntityDialogType()
+        protected virtual Type GetDialogType()
         {
-            if (entityDialogType == null)
+            if (dialogType == null)
             {
                 var attributes = this.GetType().GetCustomAttributes(typeof(DialogTypeAttribute), true);
                 if (attributes.Length >= 1)
-                    entityDialogType = attributes[0].As<DialogTypeAttribute>().Value;
+                    dialogType = attributes[0].As<DialogTypeAttribute>().Value;
                 else
                 {
-                    entityDialogType = DialogTypeRegistry.Get(GetEntityType());
+                    dialogType = DialogTypeRegistry.Get(GetEntityType());
                 }
             }
 
-            return entityDialogType;
+            return dialogType;
         }
     }
 
+    [Imported, IncludeGenericArguments(false), ScriptName("EntityGrid")]
     public abstract class EntityGrid<TEntity> : EntityGrid<TEntity, object>
         where TEntity : class, new()
     {

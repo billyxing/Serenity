@@ -3,6 +3,7 @@ using System.Collections;
 using jQueryApi.UI.Widgets;
 using jQueryApi;
 using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
 
 namespace Serenity
 {
@@ -11,25 +12,16 @@ namespace Serenity
         void Load(object entityOrId, Action done, Action<object> fail);
     }
 
+    [IncludeGenericArguments(false), ScriptName("EntityDialog")]
     public abstract partial class EntityDialog<TEntity, TOptions> : TemplatedDialog<TOptions>, IEditDialog
         where TEntity : class, new()
         where TOptions: class, new()
     {
-        private TEntity entity;
-        private object entityId;
+        protected TEntity entity;
+        protected object entityId;
         
-        protected EntityDialog()
-            : this(Q.NewBodyDiv(), null)
-        {
-        }
-
-        protected EntityDialog(TOptions opt)
-            : this(Q.NewBodyDiv(), opt)
-        {
-        }
-
-        protected EntityDialog(jQueryObject div, TOptions opt)
-            : base(div, opt)
+        protected EntityDialog(TOptions opt = null)
+            : base(opt)
         {
             if (!IsAsyncWidget())
             {
@@ -72,7 +64,7 @@ namespace Serenity
         protected TEntity Entity
         {
             get { return entity; }
-            set { entity = value ?? new TEntity(); }
+            set { entity = value ?? new object().As<TEntity>(); }
         }
 
         protected internal object EntityId
@@ -83,17 +75,17 @@ namespace Serenity
 
         protected virtual string GetEntityNameFieldValue()
         {
-            return (Entity.As<JsDictionary>()[GetEntityNameField()] ?? "").ToString();
+            return (Entity.As<JsDictionary>()[GetNameProperty()] ?? "").ToString();
         }
 
         protected virtual string GetEntityTitle()
         {
             if (!(this.IsEditMode))
-                return String.Format(Texts.Controls.EntityDialog.NewRecordTitle, GetEntitySingular());
+                return String.Format(Q.Text("Controls.EntityDialog.NewRecordTitle"), GetEntitySingular());
             else
             {
                 string title = (GetEntityNameFieldValue() ?? "");
-                return String.Format(Texts.Controls.EntityDialog.EditRecordTitle, GetEntitySingular(),
+                return String.Format(Q.Text("Controls.EntityDialog.EditRecordTitle"), GetEntitySingular(),
                     (title.IsEmptyOrNull() ? "" : " (" + title + ")"));
             }
         }
@@ -106,40 +98,46 @@ namespace Serenity
 
         protected virtual bool IsCloneMode
         {
+            [ScriptName("isCloneMode")]
             get { return false; }
         }
 
         protected bool IsEditMode
         {
+            [ScriptName("isEditMode")]
             get { return EntityId != null && !IsCloneMode; }
         }
 
         protected bool IsDeleted
         {
+            [ScriptName("isDeleted")]
             get 
             { 
                 if (EntityId == null)
                     return false;
 
-                var value = Entity.As<JsDictionary>()[GetEntityIsActiveField()].As<Int32?>();
+                var value = Entity.As<JsDictionary>()[GetIsActiveProperty()].As<Int32?>();
                 if (value == null)
                     return false;
 
-                return IdExtensions.IsNegativeId(value.Value);
+                return value < 0;
             }
         }
 
         protected bool IsNew
         {
+            [ScriptName("isNew")]
             get { return EntityId == null; }
         }
 
         protected bool IsNewOrDeleted
         {
+            [ScriptName("isNewOrDeleted")]
             get { return IsNew || this.IsDeleted; }
         }
     }
 
+    [Imported, IncludeGenericArguments(false), ScriptName("EntityDialog")]
     public abstract class EntityDialog<TEntity> : EntityDialog<TEntity, object>
         where TEntity : class, new()
     {

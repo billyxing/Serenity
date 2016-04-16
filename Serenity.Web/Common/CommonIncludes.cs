@@ -29,7 +29,7 @@ namespace Serenity.Web
             "~/Scripts/bootstrap.js",
             "~/Scripts/Saltarelle/mscorlib.js",
             "~/Scripts/Saltarelle/linq.js",
-            "~/Scripts/Serenity/Serenity.Script.Core.js",
+            "~/Scripts/Serenity/Serenity.CoreLib.js",
             "~/Scripts/Serenity/Serenity.Script.UI.js",
             "~/Scripts/Serenity/Serenity.Externals.js",
             "~/Scripts/Serenity/Serenity.Externals.Slick.js"
