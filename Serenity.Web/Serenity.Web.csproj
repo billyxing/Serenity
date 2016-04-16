@@ -224,6 +224,7 @@
     <None Include="Includes\Scripts\serenity\texts\serenity.texts.es.json" />
     <None Include="Includes\Scripts\serenity\texts\serenity.texts.ru.json" />
     <None Include="Includes\Scripts\serenity\texts\serenity.texts.de.json" />
+    <None Include="Includes\Scripts\serenity\texts\user.texts.cn.json" />
     <None Include="Includes\Scripts\SlickGrid\README.md" />
     <None Include="Includes\web.config.transform" />
     <None Include="packages.config" />
